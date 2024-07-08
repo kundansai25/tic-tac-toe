@@ -1,9 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Square from './Square';
+import Modal from './Modal';
 
 function Board({ onRestart }) {
   const [squares, setSquares] = useState(Array(9).fill(null));
   const [xIsNext, setXIsNext] = useState(true);
+  const [winner, setWinner] = useState(null);
+  const [isDraw, setIsDraw] = useState(false);
+
+  useEffect(() => {
+    const winner = calculateWinner(squares);
+    if (winner) {
+      setWinner(winner);
+    } else if (!squares.includes(null)) {
+      setIsDraw(true);
+    }
+  }, [squares]);
 
   function handleClick(i) {
     if (calculateWinner(squares) || squares[i]) {
@@ -15,17 +27,19 @@ function Board({ onRestart }) {
     setXIsNext(!xIsNext);
   }
 
+  function handleCloseModal() {
+    setWinner(null);
+    setIsDraw(false);
+    onRestart();
+  }
+
   function renderSquare(i) {
     return <Square value={squares[i]} onClick={() => handleClick(i)} />;
   }
 
-  const winner = calculateWinner(squares);
-  let status;
-  if (winner) {
-    status = 'Winner: ' + winner;
-  } else {
-    status = 'Next player: ' + (xIsNext ? 'X' : 'O');
-  }
+  const status = winner
+    ? `Winner: ${winner}`
+    : `Next player: ${xIsNext ? 'X' : 'O'}`;
 
   return (
     <div>
@@ -46,6 +60,16 @@ function Board({ onRestart }) {
         {renderSquare(8)}
       </div>
       <button className="restart-button" onClick={onRestart}>Restart Game</button>
+      <Modal
+        show={!!winner}
+        message={`Winner: ${winner}`}
+        onClose={handleCloseModal}
+      />
+      <Modal
+        show={isDraw}
+        message="The game is a draw. Would you like to restart?"
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
